@@ -15,25 +15,26 @@ describe 'realmd' do
           packages = case os_facts[:os]['family']
                      when 'Debian'
                        [
-                         'realmd',
-                         'sssd',
                          'adcli',
                          'krb5-user',
-                         'sssd-tools',
-                         'libpam-modules',
                          'libnss-sss',
+                         'libpam-modules',
                          'libpam-sss',
+                         'packagekit',
+                         'realmd',
                          'samba-common-bin',
+                         'sssd',
+                         'sssd-tools',
                        ]
                      when 'RedHat'
                        [
-                         'realmd',
-                         'sssd',
                          'adcli',
                          'krb5-workstation',
                          'oddjob',
                          'oddjob-mkhomedir',
+                         'realmd',
                          'samba-common-tools',
+                         'sssd',
                        ]
                      end
 
