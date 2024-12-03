@@ -64,6 +64,12 @@
 #   Extra arguments passed to realm join command
 # @param computer_name
 #   The computer name used with password join
+# @param manage_krb_keytab
+#   Whether to manage keytab file
+# @param krb_keytab_source
+#   Keytab file source
+# @param krb_keytab_content
+#   Keytab file content. If defined, must be either a strict-base64-encoded String or a Binary stream.
 #
 class realmd (
   String $realmd_package_name,
@@ -99,6 +105,12 @@ class realmd (
   Hash $required_packages,
   Variant[Array, Undef] $extra_join_options,
   Variant[String[1, 15], Undef, Boolean[false]] $computer_name,
+  Boolean $manage_krb_keytab = true,
+  Optional[Variant[
+      Binary, Sensitive[Binary],
+      String[1], Sensitive[String[1]],
+  ]] $krb_keytab_content = undef,
+  Optional[String[1]] $krb_keytab_source = undef,
 ) {
   if $krb_ticket_join == false {
     if ($domain_join_user and !$domain_join_password) {
