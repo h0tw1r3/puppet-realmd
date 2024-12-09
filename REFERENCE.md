@@ -62,6 +62,10 @@ The following parameters are available in the `realmd` class:
 * [`required_packages`](#-realmd--required_packages)
 * [`extra_join_options`](#-realmd--extra_join_options)
 * [`computer_name`](#-realmd--computer_name)
+* [`manage_krb_keytab`](#-realmd--manage_krb_keytab)
+* [`krb_keytab_source`](#-realmd--krb_keytab_source)
+* [`krb_keytab_content`](#-realmd--krb_keytab_content)
+* [`automatic_id_mapping`](#-realmd--automatic_id_mapping)
 
 ##### <a name="-realmd--realmd_package_name"></a>`realmd_package_name`
 
@@ -259,7 +263,46 @@ Extra arguments passed to realm join command
 
 Data type: `Variant[String[1, 15], Undef, Boolean[false]]`
 
-The computer name used with password join
+The computer name used with password and keytab join
+
+##### <a name="-realmd--manage_krb_keytab"></a>`manage_krb_keytab`
+
+Data type: `Boolean`
+
+Whether to manage keytab file
+
+Default value: `true`
+
+##### <a name="-realmd--krb_keytab_source"></a>`krb_keytab_source`
+
+Data type: `Optional[String[1]]`
+
+Keytab file source
+
+Default value: `undef`
+
+##### <a name="-realmd--krb_keytab_content"></a>`krb_keytab_content`
+
+Data type:
+
+```puppet
+Optional[Variant[
+      Binary, Sensitive[Binary],
+      String[1], Sensitive[String[1]],
+  ]]
+```
+
+Keytab file content. If defined, must be either a strict-base64-encoded String or a Binary stream.
+
+Default value: `undef`
+
+##### <a name="-realmd--automatic_id_mapping"></a>`automatic_id_mapping`
+
+Data type: `Boolean`
+
+Set this to false to not perform UID/GID mapping for users and groups, but expect these identifiers to be present in the domain already.
+
+Default value: `true`
 
 ### <a name="realmd--config"></a>`realmd::config`
 

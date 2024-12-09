@@ -5,19 +5,18 @@ describe 'realmd' do
     on_supported_os.each do |os, os_facts|
       context "on #{os}" do
         let(:facts) { os_facts }
+        let(:params) do
+          {
+            krb_ticket_join: true,
+            domain_join_user: 'user',
+            krb_keytab: '/tmp/join.keytab',
+            krb_config_file: '/etc/krb5.conf',
+            domain: 'example.com',
+            manage_krb_config: true,
+          }
+        end
 
         context 'realmd::join::keytab class with default krb_config' do
-          let(:params) do
-            {
-              krb_ticket_join: true,
-              domain_join_user: 'user',
-              krb_keytab: '/tmp/join.keytab',
-              krb_config_file: '/etc/krb5.conf',
-              domain: 'example.com',
-              manage_krb_config: true,
-            }
-          end
-
           it { is_expected.to contain_class('realmd::join::keytab') }
 
           it do
@@ -84,13 +83,7 @@ describe 'realmd' do
 
         context 'realmd::join::keytab class with custom krb_config' do
           let(:params) do
-            {
-              krb_ticket_join: true,
-              domain_join_user: 'user',
-              krb_keytab: '/tmp/join.keytab',
-              krb_config_file: '/etc/krb5.conf',
-              domain: 'example.com',
-              manage_krb_config: true,
+            super().merge(
               krb_config: {
                 'libdefaults' => {
                   'default_realm' => 'EXAMPLE.COM',
@@ -103,8 +96,8 @@ describe 'realmd' do
                     'kdc' => 'dc.example.com:88',
                   },
                 },
-              }
-            }
+              },
+            )
           end
 
           it { is_expected.to contain_class('realmd::join::keytab') }
@@ -123,6 +116,46 @@ describe 'realmd' do
             is_expected.to contain_file('krb_configuration')
               .with_content(%r{\[realms\]\nEXAMPLE.COM = \{\n  kdc = dc.example.com:88\n})
           end
+        end
+
+        context 'with krb_keytab_source set' do
+          let(:params) { super().merge(krb_keytab_source: 'puppet:///foo/bar') }
+
+          it { is_expected.to contain_file('krb_keytab').with_source('puppet:///foo/bar') }
+        end
+
+        context 'with krb_keytab_content set' do
+          context 'with non-base64-encoded String' do
+            let(:params) { super().merge(krb_keytab_content: 'example') }
+
+            it { is_expected.to raise_error(%r{invalid base64}) }
+          end
+
+          context 'with base64-encoded String' do
+            let(:params) { super().merge(krb_keytab_content: 'ZXhhbXBsZQ==') }
+
+            it { is_expected.to contain_file('krb_keytab').with_content('example') }
+          end
+
+          context 'with base64-encoded Sensitive[String]' do
+            let(:params) { super().merge(krb_keytab_content: sensitive('ZXhhbXBsZQ==')) }
+
+            it { is_expected.to contain_file('krb_keytab').with_content('example') }
+          end
+
+          # Find a way to pass Binary to krb_keytab_content
+          # context 'with Binary' do
+          # end
+
+          # Find a way to pass Sensitive[Binary] to krb_keytab_content
+          # context 'with Sensitive[Binary]' do
+          # end
+        end
+
+        context 'with manage_krb_keytab => false' do
+          let(:params) { super().merge(manage_krb_keytab: false) }
+
+          it { is_expected.not_to contain_file('krb_keytab') }
         end
       end
     end
