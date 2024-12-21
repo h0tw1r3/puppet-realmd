@@ -21,7 +21,7 @@ class realmd::join::password {
       'trusty' => ["--computer-name=${_computer_name}"],
       'xenial' => ["--computer-name=${_computer_name}"],
       'bionic' => ["--computer-name=${_computer_name}"],
-      'default'   => '',
+      default  => '',
     }
   } elsif ($facts['os']['family'] == 'RedHat' and Integer($facts['os']['release']['major']) >= 8) {
     $_computer_name_arg = ''
