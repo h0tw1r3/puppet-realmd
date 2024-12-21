@@ -1,6 +1,6 @@
 {
   "name": "h0tw1r3-realmd",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "author": "h0tw1r3",
   "summary": "Puppet module to join a system to AD and Kerberos with realmd",
   "license": "Apache-2.0",
