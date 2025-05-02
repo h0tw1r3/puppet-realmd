@@ -63,13 +63,15 @@
 # @param extra_join_options
 #   Extra arguments passed to realm join command
 # @param computer_name
-#   The computer name used with password join
+#   The computer name used with password and keytab join
 # @param manage_krb_keytab
 #   Whether to manage keytab file
 # @param krb_keytab_source
 #   Keytab file source
 # @param krb_keytab_content
 #   Keytab file content. If defined, must be either a strict-base64-encoded String or a Binary stream.
+# @param automatic_id_mapping
+#   Set this to false to not perform UID/GID mapping for users and groups, but expect these identifiers to be present in the domain already.
 #
 class realmd (
   String $realmd_package_name,
@@ -104,7 +106,8 @@ class realmd (
   Variant[String, Undef] $ou,
   Hash $required_packages,
   Variant[Array, Undef] $extra_join_options,
-  Variant[String[1, 15], Undef, Boolean[false]] $computer_name,
+  Optional[String[1, 20]] $computer_name = undef,
+  Boolean $automatic_id_mapping = true,
   Boolean $manage_krb_keytab = true,
   Optional[Variant[
       Binary, Sensitive[Binary],

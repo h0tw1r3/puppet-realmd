@@ -38,7 +38,7 @@ class realmd::join::password {
   $_args = strip(join(concat($_realm_args, $_computer_name_arg, $_extra_join_options), ' '))
 
   file { '/usr/libexec':
-    ensure  => 'directory',
+    ensure => 'directory',
   }
 
   file { '/usr/libexec/realm_join_with_password':

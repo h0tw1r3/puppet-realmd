@@ -157,6 +157,39 @@ describe 'realmd' do
 
           it { is_expected.not_to contain_file('krb_keytab') }
         end
+
+        context 'with computer_name set' do
+          let(:params) { super().merge(computer_name: 'A20CharsComputerName') }
+
+          it do
+            is_expected.to contain_exec('run_kinit_with_keytab')
+              .with_unless("klist -k /etc/krb5.keytab | grep -i 'A20CharsComputerName@example.com'")
+          end
+
+          it do
+            is_expected.to contain_exec('realm_join_with_keytab')
+              .with_command('realm join example.com --computer-name=A20CharsComputerName')
+              .with_unless("klist -k /etc/krb5.keytab | grep -i 'A20CharsComputerName@example.com'")
+          end
+        end
+
+        context 'with automatic_id_mapping => false' do
+          let(:params) { super().merge(automatic_id_mapping: false) }
+
+          it do
+            is_expected.to contain_exec('realm_join_with_keytab')
+              .with_command('realm join example.com --automatic-id-mapping=no')
+          end
+        end
+
+        context 'with ou set' do
+          let(:params) { super().merge(ou: 'OU=test') }
+
+          it do
+            is_expected.to contain_exec('realm_join_with_keytab')
+              .with_command('realm join example.com --computer-ou=OU=test')
+          end
+        end
       end
     end
   end

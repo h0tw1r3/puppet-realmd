@@ -65,6 +65,7 @@ The following parameters are available in the `realmd` class:
 * [`manage_krb_keytab`](#-realmd--manage_krb_keytab)
 * [`krb_keytab_source`](#-realmd--krb_keytab_source)
 * [`krb_keytab_content`](#-realmd--krb_keytab_content)
+* [`automatic_id_mapping`](#-realmd--automatic_id_mapping)
 
 ##### <a name="-realmd--realmd_package_name"></a>`realmd_package_name`
 
@@ -260,9 +261,11 @@ Extra arguments passed to realm join command
 
 ##### <a name="-realmd--computer_name"></a>`computer_name`
 
-Data type: `Variant[String[1, 15], Undef, Boolean[false]]`
+Data type: `Optional[String[1, 20]]`
 
-The computer name used with password join
+The computer name used with password and keytab join
+
+Default value: `undef`
 
 ##### <a name="-realmd--manage_krb_keytab"></a>`manage_krb_keytab`
 
@@ -294,6 +297,14 @@ Optional[Variant[
 Keytab file content. If defined, must be either a strict-base64-encoded String or a Binary stream.
 
 Default value: `undef`
+
+##### <a name="-realmd--automatic_id_mapping"></a>`automatic_id_mapping`
+
+Data type: `Boolean`
+
+Set this to false to not perform UID/GID mapping for users and groups, but expect these identifiers to be present in the domain already.
+
+Default value: `true`
 
 ### <a name="realmd--config"></a>`realmd::config`
 
