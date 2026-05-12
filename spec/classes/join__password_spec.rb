@@ -22,11 +22,7 @@ describe 'realmd' do
               facts.dig(:os, 'distro', 'id') == 'Ubuntu' &&
               ['focal', 'jammy'].include?(facts.dig(:os, 'distro', 'codename'))
             )
-            is_el8_or_higher = (
-              facts.dig(:os, 'family') == 'RedHat' &&
-              facts.dig(:os, 'release', 'major').to_i >= 8
-            )
-            is_ubuntu_20 || is_el8_or_higher
+            is_ubuntu_20
           end
 
           it { is_expected.to contain_class('realmd::join::password') }
