@@ -92,6 +92,8 @@ class realmd (
   String $sssd_service_ensure,
   Stdlib::Absolutepath $sssd_config_file,
   Stdlib::Filemode $sssd_config_file_mode,
+  String $sssd_config_file_owner,
+  String $sssd_config_file_group,
   Stdlib::Absolutepath $sssd_config_cache_file,
   Hash $sssd_config,
   Boolean $manage_sssd_config,
