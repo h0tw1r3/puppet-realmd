@@ -67,6 +67,8 @@
 #   Extra arguments passed to realm join command
 # @param computer_name
 #   The computer name used with password and keytab join
+# @param password_join_use_computer_name
+#   Override whether --computer-name is passed to realm join by password.
 # @param manage_krb_keytab
 #   Whether to manage keytab file
 # @param krb_keytab_source
@@ -116,6 +118,7 @@ class realmd (
   Optional[String[1, 20]] $computer_name = undef,
   Boolean $automatic_id_mapping = true,
   Boolean $manage_krb_keytab = true,
+  Boolean $password_join_use_computer_name = true,
   Optional[Variant[
       Binary, Sensitive[Binary],
       String[1], Sensitive[String[1]],

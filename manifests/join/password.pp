@@ -16,17 +16,10 @@ class realmd::join::password {
     $_computer_name = $facts['networking']['hostname'][0,15]
   }
 
-  if $facts['os']['name'] == 'Ubuntu' {
-    $_computer_name_arg  = $facts['os']['distro']['codename'] ? {
-      'focal'   => '',
-      'jammy'   => '',
-      default => ["--computer-name=${_computer_name}"],
-    }
-  } elsif ($facts['os']['family'] == 'RedHat' and Integer($facts['os']['release']['major']) >= 8) {
-    $_computer_name_arg = ''
-  }
-  else {
+  if $realmd::password_join_use_computer_name {
     $_computer_name_arg = ["--computer-name=${_computer_name}"]
+  } else {
+    $_computer_name_arg = ''
   }
 
   if $_ou != undef {
