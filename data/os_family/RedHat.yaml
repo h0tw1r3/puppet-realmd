@@ -1,5 +1,6 @@
 ---
 realmd::krb_client_package_name: krb5-workstation
+realmd::password_join_use_computer_name: false
 
 realmd::required_packages:
   oddjob:
