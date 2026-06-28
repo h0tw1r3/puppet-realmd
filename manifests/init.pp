@@ -30,6 +30,10 @@
 #   The absolute path of the SSSD configuration file
 # @param sssd_config_file_mode
 #   A file mode to set on the SSSD configuration file
+# @param sssd_config_file_owner
+#   The owner to set on the SSSD configuration file
+# @param sssd_config_file_group
+#   The group to set on the SSSD configuration file
 # @param sssd_config_cache_file
 # @param sssd_config
 #   A hash of configuration options structured in an ini-style format

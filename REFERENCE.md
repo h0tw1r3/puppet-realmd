@@ -44,11 +44,14 @@ The following parameters are available in the `realmd` class:
 * [`sssd_service_ensure`](#-realmd--sssd_service_ensure)
 * [`sssd_config_file`](#-realmd--sssd_config_file)
 * [`sssd_config_file_mode`](#-realmd--sssd_config_file_mode)
+* [`sssd_config_file_owner`](#-realmd--sssd_config_file_owner)
+* [`sssd_config_file_group`](#-realmd--sssd_config_file_group)
 * [`sssd_config_cache_file`](#-realmd--sssd_config_cache_file)
 * [`sssd_config`](#-realmd--sssd_config)
 * [`manage_sssd_config`](#-realmd--manage_sssd_config)
 * [`manage_sssd_service`](#-realmd--manage_sssd_service)
 * [`manage_sssd_package`](#-realmd--manage_sssd_package)
+* [`manage_krb_client_package`](#-realmd--manage_krb_client_package)
 * [`domain`](#-realmd--domain)
 * [`netbiosname`](#-realmd--netbiosname)
 * [`domain_join_user`](#-realmd--domain_join_user)
@@ -63,6 +66,7 @@ The following parameters are available in the `realmd` class:
 * [`required_packages`](#-realmd--required_packages)
 * [`extra_join_options`](#-realmd--extra_join_options)
 * [`computer_name`](#-realmd--computer_name)
+* [`password_join_use_computer_name`](#-realmd--password_join_use_computer_name)
 * [`manage_krb_keytab`](#-realmd--manage_krb_keytab)
 * [`krb_keytab_source`](#-realmd--krb_keytab_source)
 * [`krb_keytab_content`](#-realmd--krb_keytab_content)
@@ -158,6 +162,18 @@ Data type: `Stdlib::Filemode`
 
 A file mode to set on the SSSD configuration file
 
+##### <a name="-realmd--sssd_config_file_owner"></a>`sssd_config_file_owner`
+
+Data type: `String`
+
+The owner to set on the SSSD configuration file
+
+##### <a name="-realmd--sssd_config_file_group"></a>`sssd_config_file_group`
+
+Data type: `String`
+
+The group to set on the SSSD configuration file
+
 ##### <a name="-realmd--sssd_config_cache_file"></a>`sssd_config_cache_file`
 
 Data type: `Stdlib::Absolutepath`
@@ -183,6 +199,12 @@ Data type: `Boolean`
 Enable or disable management of the SSSD service
 
 ##### <a name="-realmd--manage_sssd_package"></a>`manage_sssd_package`
+
+Data type: `Boolean`
+
+
+
+##### <a name="-realmd--manage_krb_client_package"></a>`manage_krb_client_package`
 
 Data type: `Boolean`
 
@@ -273,6 +295,14 @@ Data type: `Optional[String[1, 20]]`
 The computer name used with password and keytab join
 
 Default value: `undef`
+
+##### <a name="-realmd--password_join_use_computer_name"></a>`password_join_use_computer_name`
+
+Data type: `Boolean`
+
+Override whether --computer-name is passed to realm join by password.
+
+Default value: `true`
 
 ##### <a name="-realmd--manage_krb_keytab"></a>`manage_krb_keytab`
 
