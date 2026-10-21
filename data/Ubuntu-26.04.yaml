@@ -1,0 +1,8 @@
+---
+# sssd 2.11.0 changed sssd.conf to root:sssd 0640 so the daemons can run as the
+# sssd user. Ubuntu 26.04 ships sssd 2.12 and its sssd.service resets the
+# ownership on every start (ExecStartPre chown -R root:sssd /etc/sssd), so
+# managing the file as root:root 0600 produces a corrective change and an sssd
+# restart on every run. See https://github.com/h0tw1r3/puppet-realmd/issues/21
+realmd::sssd_config_file_group: 'sssd'
+realmd::sssd_config_file_mode: '0640'
