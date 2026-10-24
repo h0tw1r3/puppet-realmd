@@ -67,4 +67,36 @@ describe 'realmd' do
       end
     end
   end
+
+  # sssd 2.11+ runs as the sssd user and wants sssd.conf root:sssd 0640; the
+  # per-release data layer supplies that. facterdb has no Ubuntu 26.04 fact
+  # set yet, so this takes an Ubuntu one and moves it to 26.04.
+  context 'on Ubuntu 26.04 (sssd 2.11+)' do
+    let(:facts) do
+      ubuntu = on_supported_os.find { |os, _| os.start_with?('ubuntu-') }.last
+      release = { full: '26.04', major: '26.04', minor: '04' }
+      ubuntu.merge(
+        os: ubuntu[:os].merge(
+          release: release,
+          distro: (ubuntu[:os][:distro] || {}).merge(codename: 'resolute', release: release),
+        ),
+      )
+    end
+
+    let(:params) do
+      {
+        manage_sssd_config: true,
+        sssd_config: { test: true },
+      }
+    end
+
+    it do
+      is_expected.to contain_file('/etc/sssd/sssd.conf')
+        .with(
+          owner: 'root',
+          group: 'sssd',
+          mode: '0640',
+        )
+    end
+  end
 end
