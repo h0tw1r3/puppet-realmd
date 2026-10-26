@@ -25,6 +25,9 @@ spec/default_facts.yml:
   delete: true
 
 Gemfile:
+  overrides:
+    - gem: 'puppet_litmus'
+      version: '~> 2.8.1'
   optional:
     ':development':
       - gem: 'github_changelog_generator'

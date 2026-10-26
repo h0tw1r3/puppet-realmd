@@ -1,122 +1,150 @@
 # This is a generic workflow for Puppet module acceptance operations.
-name: "Module Acceptance"
+name: "Module Acceptance Tests"
 
 on:
   workflow_call:
     inputs:
-      matrix:
-        description: "JSON matrix"
-        type: "string"
-        required: true
-      debug:
-        description: "Run jobs with debug steps and flags enabled"
-        type: "boolean"
-        required: false
-        default: false
-      puppet_version:
-        description: "Version of Puppet used to run tests"
-        type: "string"
-        required: false
-        default: "~> 7.24"
-      ruby_version:
-        description: "Version of Ruby to install"
-        type: "string"
-        required: false
-        default: "2.7"
       runs_on:
-        description: "The operating system used for the runner"
-        type: "string"
+        description: "The operating system used for the runner."
         required: false
-        default: "ubuntu-latest"
+        type: "string"
+      flags:
+        description: "Additional flags to pass to matrix_from_metadata_v3."
+        required: false
+        default: ''
+        type: "string"
+      kernel_modules:
+        description: "Volume map host kernel /lib/modules into docker container"
+        default: true
+        type: boolean
+      disable_apparmor:
+        description: "Disable and stop apparmor"
+        default: false
+        type: boolean
+      ruby_version:
+        description: "Ruby version to use"
+        required: false
+        default: '3.2'
+        type: "string"
+
+permissions:
+  contents: read
 
 jobs:
-  Test:
-    name: "Test ${{ matrix.platforms.label }} with ${{ matrix.collection }}"
-    runs-on: ${{ inputs.runs_on }}
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(inputs.matrix) }}
-    env:
-      PUPPET_GEM_VERSION: ${{ inputs.puppet_version }}
-      FACTER_GEM_VERSION: 'https://github.com/puppetlabs/facter#main'
-      BOLT_GEM: 1
-    steps:
-      - name: Checkout Source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
-      - name: Activate Ruby ${{ inputs.ruby_version }}
-        uses: ruby/setup-ruby@v1
+  setup_matrix:
+    name: "Setup Test Matrix"
+    runs-on: ubuntu-latest
+    outputs:
+      acceptance_matrix: ${{ steps.get-matrix.outputs.matrix }}
+    env:
+      BUNDLE_WITHOUT: release_prep
+
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v6"
+
+      - name: "Setup ruby"
+        uses: "ruby/setup-ruby@v1"
         with:
           ruby-version: ${{ inputs.ruby_version }}
           bundler-cache: true
 
-      - name: Debug
-        if: ${{ inputs.debug == true }}
+      - name: "Bundle environment"
         run: |
           echo ::group::bundler environment
           bundle env
           echo ::endgroup::
-          echo ::group::docker info
-          docker info
-          echo ::endgroup::
-          echo "RSPEC_DEBUG=1" >> $GITHUB_ENV
-          echo "DEBUG=1" >> $GITHUB_ENV
 
-      - name: Cache fixture modules
-        id: cache-fixtures
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-fixtures-modules
-        with:
-          path: spec/fixtures/modules
-          key: test-${{ env.cache-name }}-${{ hashFiles('metadata.json', '.fixtures.yml') }}
-          restore-keys: |
-            test-${{ env.cache-name }}-
-            test-
-
-      - name: Provision test environment
+      - name: Setup Test Matrix
+        id: get-matrix
         run: |
-          bundle exec rake 'litmus:provision[${{matrix.platforms.provider}},${{ matrix.platforms.image }}]'
-          FILE='spec/fixtures/litmus_inventory.yaml'
-          sed -e 's/password: .*/password: "[redacted]"/' < $FILE || true
-          if [ "${{ inputs.debug }}" == "true" ] ; then
-            while read CN ; do
-              echo ::group::docker container $CN
-              docker inspect "$CN"
-              echo ::endgroup::
-            done < <(docker ps --format '{{.Names}}')
+          bundle exec matrix_from_metadata_v3 ${{ inputs.flags }}
+
+  acceptance:
+    name: "Acceptance tests (${{matrix.platforms.label}}, ${{matrix.collection.collection || matrix.collection}})"
+    needs: "setup_matrix"
+    runs-on: ${{ matrix.platforms.runner || inputs.runs_on }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson( needs.setup_matrix.outputs.acceptance_matrix ) }}
+
+    env:
+      PUPPET_GEM_VERSION: '~> 8.9'
+      FACTER_GEM_VERSION: '~> 4.1'
+
+    steps:
+      - name: "Configure forge authentication"
+        env:
+          FORGE_TOKEN: ${{ secrets.PUPPET_FORGE_TOKEN || secrets.PUPPET_FORGE_TOKEN_PUBLIC }}
+        run: |
+          if [ -n "$FORGE_TOKEN" ]; then
+            echo "PUPPET_FORGE_TOKEN=$FORGE_TOKEN" >> $GITHUB_ENV
+            echo "BUNDLE_RUBYGEMS___PUPPETCORE__PUPPET__COM=forge-key:$FORGE_TOKEN" >> $GITHUB_ENV
           fi
 
-      - name: Install agent
+      - name: "Checkout"
+        uses: "actions/checkout@v6"
+
+      - name: "Disable Apparmor"
+        if: ${{ inputs.disable_apparmor }}
         run: |
-          echo ::group::agent
-          bundle exec rake 'litmus:install_agent[${{ matrix.collection }}]'
-          echo ::endgroup::
+          if command -v apparmor_parser >/dev/null ; then
+            sudo find /etc/apparmor.d/ -maxdepth 1 -type f -exec ln -sf {} /etc/apparmor.d/disable/ \;
+            sudo apparmor_parser -R /etc/apparmor.d/disable/* || true
+            sudo systemctl disable apparmor
+            sudo systemctl stop apparmor
+          fi
 
-      - name: Install module
-        run: bundle exec rake 'litmus:install_module'
+      - name: "Setup ruby"
+        uses: "ruby/setup-ruby@v1"
+        with:
+          ruby-version: ${{ inputs.ruby_version }}
+          bundler-cache: true
 
-      - name: Run acceptance tests
-        id: run-acceptance
-        run: bundle exec rake 'litmus:acceptance'
-
-      - name: Failure Logs
-        if: ${{ failure() && steps.run-acceptance.conclusion == 'failure' }}
-        continue-on-error: true
+      - name: "Bundle environment"
         run: |
-          echo ::group::last 100 lines in runner journal
-          journalctl -n 100
-          echo ::endgroup::
-          echo ::group::last 100 lines in container journal
-          bundle exec bolt command run 'journalctl -n 100' -t all -i spec/fixtures/litmus_inventory.yaml
-          echo ::endgroup::
-          echo ::group::last 50 lines of puppetlabs logs
-          bundle exec bolt command run 'tail -n 50 /var/log/puppetlabs/*/*.log' -t all -i spec/fixtures/litmus_inventory.yaml
+          echo ::group::bundler environment
+          bundle env
           echo ::endgroup::
 
-      - name: Tear down
+      - name: "Provision environment"
+        env:
+          PROVIDER: ${{ matrix.platforms.provider }}
+          IMAGE: ${{ matrix.platforms.image }}
+        run: |
+          if [[ "${{ inputs.kernel_modules }}" == "true" ]] && [[ "$PROVIDER" =~ docker* ]] ; then
+            DOCKER_RUN_OPTS="docker_run_opts: {'--volume': '/lib/modules/$(uname -r):/lib/modules/$(uname -r)'}"
+          else
+            DOCKER_RUN_OPTS=''
+          fi
+          bundle exec rake "litmus:provision[$PROVIDER,$IMAGE,$DOCKER_RUN_OPTS]"
+          FILE='spec/fixtures/litmus_inventory.yaml'
+          sed -e 's/password: .*/password: "[redacted]"/' < $FILE || true
+
+      - name: "Install Puppet agent"
+        env:
+          COLLECTION_KEY: ${{ matrix.collection.collection }}
+          COLLECTION_STRING: ${{ matrix.collection.collection || matrix.collection }}
+          VERSION: ${{ matrix.collection.version }}
+        run: |
+          if [[ "$VERSION" ]] ; then
+            export PUPPET_VERSION="$VERSION"
+            bundle exec rake "litmus:install_agent[$COLLECTION_KEY]"
+          else
+            bundle exec rake "litmus:install_agent[$COLLECTION_STRING]"
+          fi
+
+      - name: "Install module"
+        run: |
+          bundle exec rake 'litmus:install_modules_from_fixtures'
+
+      - name: "Run acceptance tests"
+        run: |
+          bundle exec rake 'litmus:acceptance:parallel'
+
+      - name: "Remove test environment"
         if: ${{ always() }}
         continue-on-error: true
         run: |
